@@ -1,60 +1,26 @@
-version: 2
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/2.0/configuration-reference
+version: 2.1
+
+# Define a job to be invoked later in a workflow.
+# See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  build:
+  say-hello:
+    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
+    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
-      - image: circleci/python:3.7.3
-
-    working_directory: ~/repo
-
+      - image: cimg/base:stable
+    # Add steps to the job
+    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
-
-      - setup_remote_docker:
-          docker_layer_caching: true
-          version: 18.06.0-ce
-      
       - run:
-          name: Install Docker client
-          command: |
-            set -x
-            VER="17.03.0-ce"
-            curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
-            tar -xz -C /tmp -f /tmp/docker-$VER.tgz
-            sudo mv /tmp/docker/* /usr/bin
+          name: "Say hello"
+          command: "echo Hello, World!"
 
-      - run:
-          name: run tests
-          command: |
-            docker image build -t fitter-happier-docker web
-            docker container run -d fitter-happier-docker python -m unittest discover web
-
-      - store_artifacts:
-          path: test-reports
-          destination: test-reports
-
-  publish-image:
-    machine: true
-    steps:
-      - checkout
-
-      - deploy:
-          name: Publish application to Docker Hub
-          command: |
-            docker login -u $DOCKER_HUB_USER_ID -p $DOCKER_HUB_PWD
-            docker image build -t fitter-happier-docker web
-            docker tag fitter-happier-docker $DOCKER_HUB_USER_ID/fitter-happier-docker:$CIRCLE_SHA1
-            docker tag fitter-happier-docker $DOCKER_HUB_USER_ID/fitter-happier-docker:latest
-            docker push $DOCKER_HUB_USER_ID/fitter-happier-docker:$CIRCLE_SHA1
-            docker push $DOCKER_HUB_USER_ID/fitter-happier-docker:latest
-         
+# Invoke jobs via workflows
+# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  version: 2
-  build-master:
+  say-hello-workflow:
     jobs:
-      - build
-      - publish-image:
-          requires:
-            - build
-          filters:
-            branches:
-              only: master
+      - say-hello
